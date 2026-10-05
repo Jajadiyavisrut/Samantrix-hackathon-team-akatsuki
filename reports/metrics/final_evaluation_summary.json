@@ -1,0 +1,45 @@
+{
+  "best_model": "Linear SVM (LinearSVC)",
+  "test_comparison": [
+    {
+      "Model": "Multinomial Naive Bayes",
+      "Accuracy": 0.6005,
+      "Macro Precision": 0.6058,
+      "Macro Recall": 0.5509,
+      "Macro F1": 0.5282,
+      "Weighted F1": 0.5716
+    },
+    {
+      "Model": "Logistic Regression",
+      "Accuracy": 0.7158,
+      "Macro Precision": 0.7545,
+      "Macro Recall": 0.6894,
+      "Macro F1": 0.689,
+      "Weighted F1": 0.7021
+    },
+    {
+      "Model": "Linear SVM (LinearSVC)",
+      "Accuracy": 0.7239,
+      "Macro Precision": 0.7448,
+      "Macro Recall": 0.6997,
+      "Macro F1": 0.6975,
+      "Weighted F1": 0.7105
+    },
+    {
+      "Model": "BiLSTM (Neural)",
+      "Accuracy": 0.7507,
+      "Macro Precision": 0.6726,
+      "Macro Recall": 0.6871,
+      "Macro F1": 0.6757,
+      "Weighted F1": 0.737
+    }
+  ],
+  "best_model_metrics": {
+    "Model": "Linear SVM (LinearSVC)",
+    "Accuracy": 0.7239,
+    "Macro Precision": 0.7448,
+    "Macro Recall": 0.6997,
+    "Macro F1": 0.6975,
+    "Weighted F1": 0.7105
+  }
+}
