@@ -176,7 +176,7 @@ def train_neural_model(
         val_macro_f1 = f1_score(val_targets, val_preds, average='macro', zero_division=0)
         val_weighted_f1 = f1_score(val_targets, val_preds, average='weighted', zero_division=0)
         
-        print(f"Epoch {epoch:02d}/{NUM_EPOCHS} | Train Loss: {train_loss:.4f} | Val Acc: {val_acc:.4f} | Val Macro-F1: {val_macro_f1:.4f}")
+        print(f"Epoch {epoch:02d}/{NUM_EPOCHS} | Train Loss: {train_loss:.4f} | Val Acc: {val_acc:.4f} | Val Macro-F1: {val_macro_f1:.4f}", flush=True)
         
         if val_macro_f1 > best_val_macro_f1:
             best_val_macro_f1 = val_macro_f1
