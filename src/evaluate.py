@@ -108,10 +108,16 @@ def evaluate_all_models_on_test(
     X_train_tfidf = vectorizer.transform(train_df["Resume_str"].tolist())
     y_train = encoder.transform(train_df["Category"].tolist())
     
+    # Load selected tuned classical model or fit
+    if os.path.exists(BEST_CLASSICAL_MODEL_PATH):
+        selected_svm = joblib.load(BEST_CLASSICAL_MODEL_PATH)
+    else:
+        selected_svm = LinearSVC(C=3.0, class_weight="balanced", max_iter=2500, random_state=42).fit(X_train_tfidf, y_train)
+        
     models_dict = {
         "Multinomial Naive Bayes": MultinomialNB(alpha=0.1).fit(X_train_tfidf, y_train),
         "Logistic Regression": LogisticRegression(C=5.0, max_iter=1000, class_weight="balanced", random_state=42).fit(X_train_tfidf, y_train),
-        "Linear SVM (LinearSVC)": LinearSVC(C=1.0, class_weight="balanced", max_iter=2000, random_state=42).fit(X_train_tfidf, y_train)
+        "Linear SVM (LinearSVC)": selected_svm
     }
     
     all_metrics = []

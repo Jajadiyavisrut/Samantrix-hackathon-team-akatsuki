@@ -134,9 +134,9 @@ def run_pipeline():
     val_df = pd.read_csv(PROCESSED_DATA_DIR / "val.csv")
     test_df = pd.read_csv(PROCESSED_DATA_DIR / "test.csv")
     
-    # STAGE 4: Classical ML Models Training
-    print("\n[STAGE 4/8] Training Classical ML Baselines (Naive Bayes, Logistic Regression, Linear SVM)...")
-    classical_results, best_classical_clf = train_classical_models(train_df, val_df)
+    # STAGE 4: Model Tuning & Classical ML
+    print("\n[STAGE 4/8] MODEL TUNING & CLASSICAL ML BENCHMARKING...")
+    tuning_df, best_classical_clf, best_vec = train_classical_models(train_df, val_df)
     
     # STAGE 5: Deep Learning Model Training
     print("\n[STAGE 5/8] Training Neural Deep Learning Model (BiLSTM Text Classifier)...")
@@ -152,7 +152,7 @@ def run_pipeline():
     print(comp_df.to_string(index=False))
     print("-" * 70)
     print(f"Selected Final Model: {best_model_name}")
-    print("Selection Criterion : Validation Macro-F1 (0.6540) with strongest balanced multiclass generalization")
+    print(f"Selection Criterion : Highest Validation Macro-F1 among evaluated models")
     print("Final Test Evaluation: Untouched Test Set (373 samples)")
     
     # STAGE 7: Error Analysis on Selected Model
