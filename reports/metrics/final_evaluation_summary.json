@@ -19,11 +19,11 @@
     },
     {
       "Model": "Linear SVM (LinearSVC)",
-      "Accuracy": 0.7239,
-      "Macro Precision": 0.7464,
-      "Macro Recall": 0.6997,
-      "Macro F1": 0.7,
-      "Weighted F1": 0.7124
+      "Accuracy": 0.7212,
+      "Macro Precision": 0.7332,
+      "Macro Recall": 0.6891,
+      "Macro F1": 0.6884,
+      "Weighted F1": 0.7086
     },
     {
       "Model": "BiLSTM (Neural)",
@@ -36,10 +36,10 @@
   ],
   "best_model_metrics": {
     "Model": "Linear SVM (LinearSVC)",
-    "Accuracy": 0.7239,
-    "Macro Precision": 0.7464,
-    "Macro Recall": 0.6997,
-    "Macro F1": 0.7,
-    "Weighted F1": 0.7124
+    "Accuracy": 0.7212,
+    "Macro Precision": 0.7332,
+    "Macro Recall": 0.6891,
+    "Macro F1": 0.6884,
+    "Weighted F1": 0.7086
   }
 }

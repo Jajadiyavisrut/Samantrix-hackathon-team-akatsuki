@@ -203,11 +203,27 @@ def run_pipeline():
     print("Production Validation Summary:")
     print(f"  {passed_samples}/{total_samples} unseen samples classified correctly")
     print(f"  {failed_samples}/{total_samples} unseen samples misclassified")
+    
+    # Optional diagnostic evaluation on real-world PDF case study if file exists
+    visrut_pdf_path = Path("V:/AIML(sub)/Visrut-Jajadiya_Resume.pdf")
+    if visrut_pdf_path.exists():
+        print("\n" + "-" * 70)
+        print("Diagnostic Multidisciplinary Case Study (Real-World PDF Ingestion):")
+        print(f"  File: {visrut_pdf_path.name}")
+        pdf_res = pipeline.predict_pdf(str(visrut_pdf_path))
+        if pdf_res["success"]:
+            print(f"  Predicted Category: {pdf_res['predicted_category']}")
+            print(f"  Decision Score    : {pdf_res['confidence']:.4f}")
+            print(f"  Top-3 Decision Score Ranking:")
+            for rank, rank_item in enumerate(pdf_res.get("top_classes", []), start=1):
+                print(f"    Rank {rank}: {rank_item['category']:24s} | Decision Score: {rank_item['score']:.4f}")
+        else:
+            print(f"  Extraction error: {pdf_res.get('error')}")
+            
     print("\nKnown limitation:")
     print("  One Software/Cloud Engineering resume was classified as ENGINEERING")
     print("  instead of INFORMATION-TECHNOLOGY because the model assigned nearly")
-    print("  identical decision scores to the two related technical categories")
-    print("  (-0.6631 vs -0.6782).")
+    print("  identical decision scores to the two related technical categories.")
     
     elapsed = time.time() - start_total_time
     print("\n" + "=" * 70)

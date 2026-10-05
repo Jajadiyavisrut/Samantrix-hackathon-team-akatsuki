@@ -79,6 +79,149 @@ def preprocess_text(text: Union[str, float, None]) -> str:
     return cleaned
 
 
+# Section detection headers for section-aware text weighting
+EXPERIENCE_SECTION_PATTERN = re.compile(
+    r"\b(experience|employment history|work history|professional experience|career history|work experience|professional background)\b",
+    re.IGNORECASE
+)
+SKILLS_SECTION_PATTERN = re.compile(
+    r"\b(technical skills|skills|core competencies|areas of expertise|competencies|technologies|proficiencies|skills & tools)\b",
+    re.IGNORECASE
+)
+SUMMARY_SECTION_PATTERN = re.compile(
+    r"\b(summary|professional summary|profile|career profile|executive summary|about me)\b",
+    re.IGNORECASE
+)
+PROJECTS_SECTION_PATTERN = re.compile(
+    r"\b(projects|academic projects|personal projects|key projects|selected projects|project experience)\b",
+    re.IGNORECASE
+)
+EDUCATION_SECTION_PATTERN = re.compile(
+    r"\b(education|academic background|qualifications|academic credentials)\b",
+    re.IGNORECASE
+)
+CERTIFICATIONS_SECTION_PATTERN = re.compile(
+    r"\b(certifications|certificates|licenses|accreditations)\b",
+    re.IGNORECASE
+)
+
+
+def preprocess_section_aware(
+    text: Union[str, float, None],
+    experience_boost: int = 2,
+    skills_boost: int = 2
+) -> str:
+    """
+    Section-aware text preprocessor.
+    Identifies resume sections and weights primary professional evidence
+    (Experience, Job Titles, Core Technical Skills, Profile Summary) higher than
+    isolated secondary project descriptions.
+    
+    If no explicit section headers are detected, gracefully falls back to canonical preprocessing.
+    """
+    if text is None or not isinstance(text, str):
+        return ""
+        
+    lines = text.split("\n")
+    if len(lines) <= 2:
+        return preprocess_text(text)
+        
+    current_section = "header"
+    sections = {
+        "header": [],
+        "experience": [],
+        "skills": [],
+        "summary": [],
+        "education": [],
+        "certifications": [],
+        "projects": [],
+        "other": []
+    }
+    
+    header_found = False
+    for line in lines:
+        line_clean = line.strip()
+        if not line_clean:
+            continue
+            
+        line_lower = line_clean.lower()
+        if len(line_clean) < 40:
+            if EXPERIENCE_SECTION_PATTERN.match(line_lower):
+                current_section = "experience"
+                header_found = True
+                continue
+            elif SKILLS_SECTION_PATTERN.match(line_lower):
+                current_section = "skills"
+                header_found = True
+                continue
+            elif SUMMARY_SECTION_PATTERN.match(line_lower):
+                current_section = "summary"
+                header_found = True
+                continue
+            elif PROJECTS_SECTION_PATTERN.match(line_lower):
+                current_section = "projects"
+                header_found = True
+                continue
+            elif EDUCATION_SECTION_PATTERN.match(line_lower):
+                current_section = "education"
+                header_found = True
+                continue
+            elif CERTIFICATIONS_SECTION_PATTERN.match(line_lower):
+                current_section = "certifications"
+                header_found = True
+                continue
+                
+        sections[current_section].append(line_clean)
+        
+    if not header_found:
+        return preprocess_text(text)
+        
+    weighted_parts = []
+    
+    # 1. Header (Name, Contact, Job Title if top-of-resume): 2x
+    header_text = preprocess_text(" ".join(sections["header"]))
+    if header_text:
+        weighted_parts.extend([header_text] * 2)
+        
+    # 2. Summary / Objective: 2x
+    summary_text = preprocess_text(" ".join(sections["summary"]))
+    if summary_text:
+        weighted_parts.extend([summary_text] * 2)
+        
+    # 3. Professional Experience (Primary career signal): experience_boost x
+    exp_text = preprocess_text(" ".join(sections["experience"]))
+    if exp_text:
+        weighted_parts.extend([exp_text] * experience_boost)
+        
+    # 4. Technical Skills: skills_boost x
+    skills_text = preprocess_text(" ".join(sections["skills"]))
+    if skills_text:
+        weighted_parts.extend([skills_text] * skills_boost)
+        
+    # 5. Certifications: 2x
+    cert_text = preprocess_text(" ".join(sections["certifications"]))
+    if cert_text:
+        weighted_parts.extend([cert_text] * 2)
+        
+    # 6. Education: 1x
+    edu_text = preprocess_text(" ".join(sections["education"]))
+    if edu_text:
+        weighted_parts.append(edu_text)
+        
+    # 7. Projects (Secondary project domain): 1x
+    proj_text = preprocess_text(" ".join(sections["projects"]))
+    if proj_text:
+        weighted_parts.append(proj_text)
+        
+    # 8. Other / Miscellaneous: 1x
+    other_text = preprocess_text(" ".join(sections["other"]))
+    if other_text:
+        weighted_parts.append(other_text)
+        
+    combined = " ".join(weighted_parts).strip()
+    return combined if combined else preprocess_text(text)
+
+
 def tokenize_text(text: str) -> List[str]:
     """
     Tokenizes preprocessed text into individual words/tokens.

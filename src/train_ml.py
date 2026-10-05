@@ -1,12 +1,12 @@
 """
 Classical Machine Learning Models Training & Tuning Module.
 Implements:
-1. Systematic feature representation evaluation (Word TF-IDF, Char-wb TF-IDF, Combined FeatureUnion).
+1. Systematic feature representation evaluation (Word TF-IDF, Char-wb TF-IDF, Section-Aware TF-IDF, Combined FeatureUnion).
 2. Hyperparameter grid search for LinearSVC (C in 0.5, 1.0, 1.5, 2.0, 3.0) and LogisticRegression (C in 1.0, 5.0, 10.0).
 3. Multinomial Naive Bayes baseline.
-4. Validation-only model selection strictly based on Validation Macro-F1.
+4. Validation-only model selection strictly based on Validation Macro-F1 (dynamic argmax ranking).
 5. Export of validation experiment comparison table to reports/metrics/validation_tuning_experiments.csv.
-6. Serialization of the best performing classical pipeline artifacts.
+6. Serialization of the winning classical pipeline artifacts.
 """
 import time
 import joblib
@@ -25,14 +25,14 @@ try:
         PROCESSED_DATA_DIR, BEST_CLASSICAL_MODEL_PATH, TFIDF_VECTORIZER_PATH,
         LABEL_ENCODER_PATH, METRICS_DIR, RANDOM_SEED
     )
-    from src.preprocessing import preprocess_text
+    from src.preprocessing import preprocess_text, preprocess_section_aware
     from src.features import encode_labels
 except ImportError:
     from config import (
         PROCESSED_DATA_DIR, BEST_CLASSICAL_MODEL_PATH, TFIDF_VECTORIZER_PATH,
         LABEL_ENCODER_PATH, METRICS_DIR, RANDOM_SEED
     )
-    from preprocessing import preprocess_text
+    from preprocessing import preprocess_text, preprocess_section_aware
     from features import encode_labels
 
 
@@ -76,7 +76,7 @@ def train_classical_models(
 ) -> Tuple[pd.DataFrame, Any, Any]:
     """
     Executes comprehensive model tuning and feature representation experiments.
-    Evaluates strictly on the validation set, selects the best model by Validation Macro-F1,
+    Evaluates strictly on the validation set, dynamically selects the best model by Validation Macro-F1,
     and serializes the winning vectorizer and classifier.
     """
     custom_stop = [
@@ -85,8 +85,8 @@ def train_classical_models(
         'an', 'as', 'is', 'was', 'are', 'that', 'all', 'etc'
     ]
     
-    train_texts = train_df["Resume_str"].tolist()
-    val_texts = val_df["Resume_str"].tolist()
+    raw_train_texts = train_df["Resume_str"].tolist()
+    raw_val_texts = val_df["Resume_str"].tolist()
     
     # 1. Encode labels
     encoder, y_train, y_val, _ = encode_labels(
@@ -96,6 +96,7 @@ def train_classical_models(
     )
     
     # 2. Build feature representations (fitted strictly on training texts)
+    # A. Standard Word TF-IDF
     w_vec = TfidfVectorizer(
         preprocessor=preprocess_text,
         stop_words=custom_stop,
@@ -105,9 +106,10 @@ def train_classical_models(
         max_df=0.95,
         sublinear_tf=True
     )
-    X_tr_w = w_vec.fit_transform(train_texts)
-    X_va_w = w_vec.transform(val_texts)
+    X_tr_w = w_vec.fit_transform(raw_train_texts)
+    X_va_w = w_vec.transform(raw_val_texts)
     
+    # B. Char-wb TF-IDF
     c_vec = TfidfVectorizer(
         preprocessor=preprocess_text,
         analyzer='char_wb',
@@ -117,9 +119,23 @@ def train_classical_models(
         max_df=0.95,
         sublinear_tf=True
     )
-    X_tr_c = c_vec.fit_transform(train_texts)
-    X_va_c = c_vec.transform(val_texts)
+    X_tr_c = c_vec.fit_transform(raw_train_texts)
+    X_va_c = c_vec.transform(raw_val_texts)
     
+    # C. Section-Aware Word TF-IDF (Prioritizes Experience, Skills, Summary over isolated projects)
+    sec_vec = TfidfVectorizer(
+        preprocessor=preprocess_section_aware,
+        stop_words=custom_stop,
+        ngram_range=(1, 2),
+        max_features=10000,
+        min_df=2,
+        max_df=0.95,
+        sublinear_tf=True
+    )
+    X_tr_sec = sec_vec.fit_transform(raw_train_texts)
+    X_va_sec = sec_vec.transform(raw_val_texts)
+    
+    # D. Combined Word + Char TF-IDF
     import scipy.sparse as sp
     X_tr_u = sp.hstack([X_tr_w, X_tr_c], format='csr')
     X_va_u = sp.hstack([X_va_w, X_va_c], format='csr')
@@ -131,26 +147,23 @@ def train_classical_models(
         ("Logistic Regression", "Word (1,2) 10k", "C=5.0, balanced", LogisticRegression(C=5.0, class_weight="balanced", max_iter=1000, random_state=RANDOM_SEED), w_vec, X_tr_w, X_va_w),
         ("Logistic Regression", "Word (1,2) 10k", "C=10.0, balanced", LogisticRegression(C=10.0, class_weight="balanced", max_iter=1000, random_state=RANDOM_SEED), w_vec, X_tr_w, X_va_w),
         ("Linear SVM (LinearSVC)", "Word (1,2) 10k", "C=0.5, balanced", LinearSVC(C=0.5, class_weight="balanced", max_iter=2500, random_state=RANDOM_SEED), w_vec, X_tr_w, X_va_w),
-        ("Linear SVM (LinearSVC)", "Word (1,2) 10k", "C=1.0, balanced [Baseline]", LinearSVC(C=1.0, class_weight="balanced", max_iter=2500, random_state=RANDOM_SEED), w_vec, X_tr_w, X_va_w),
+        ("Linear SVM (LinearSVC)", "Word (1,2) 10k", "C=1.0, balanced", LinearSVC(C=1.0, class_weight="balanced", max_iter=2500, random_state=RANDOM_SEED), w_vec, X_tr_w, X_va_w),
         ("Linear SVM (LinearSVC)", "Word (1,2) 10k", "C=1.5, balanced", LinearSVC(C=1.5, class_weight="balanced", max_iter=2500, random_state=RANDOM_SEED), w_vec, X_tr_w, X_va_w),
         ("Linear SVM (LinearSVC)", "Word (1,2) 10k", "C=2.0, balanced", LinearSVC(C=2.0, class_weight="balanced", max_iter=2500, random_state=RANDOM_SEED), w_vec, X_tr_w, X_va_w),
-        ("Linear SVM (LinearSVC)", "Word (1,2) 10k", "C=3.0, balanced [Tuned]", LinearSVC(C=3.0, class_weight="balanced", max_iter=2500, random_state=RANDOM_SEED), w_vec, X_tr_w, X_va_w),
+        ("Linear SVM (LinearSVC)", "Word (1,2) 10k", "C=3.0, balanced", LinearSVC(C=3.0, class_weight="balanced", max_iter=2500, random_state=RANDOM_SEED), w_vec, X_tr_w, X_va_w),
         ("Linear SVM (LinearSVC)", "Char-wb (3,5) 15k", "C=1.0, balanced", LinearSVC(C=1.0, class_weight="balanced", max_iter=2500, random_state=RANDOM_SEED), c_vec, X_tr_c, X_va_c),
-        ("Linear SVM (LinearSVC)", "Char-wb (3,5) 15k", "C=2.0, balanced", LinearSVC(C=2.0, class_weight="balanced", max_iter=2500, random_state=RANDOM_SEED), c_vec, X_tr_c, X_va_c),
         ("Linear SVM (LinearSVC)", "Word(10k)+Char(15k)", "C=1.0, balanced", LinearSVC(C=1.0, class_weight="balanced", max_iter=2500, random_state=RANDOM_SEED), None, X_tr_u, X_va_u),
-        ("Linear SVM (LinearSVC)", "Word(10k)+Char(15k)", "C=2.0, balanced", LinearSVC(C=2.0, class_weight="balanced", max_iter=2500, random_state=RANDOM_SEED), None, X_tr_u, X_va_u),
         ("Linear SVM (LinearSVC)", "Word(10k)+Char(15k)", "C=3.0, balanced", LinearSVC(C=3.0, class_weight="balanced", max_iter=2500, random_state=RANDOM_SEED), None, X_tr_u, X_va_u),
+        ("Linear SVM (LinearSVC)", "Section-Aware Word", "C=1.0, balanced", LinearSVC(C=1.0, class_weight="balanced", max_iter=2500, random_state=RANDOM_SEED), sec_vec, X_tr_sec, X_va_sec),
+        ("Linear SVM (LinearSVC)", "Section-Aware Word", "C=2.0, balanced", LinearSVC(C=2.0, class_weight="balanced", max_iter=2500, random_state=RANDOM_SEED), sec_vec, X_tr_sec, X_va_sec),
+        ("Linear SVM (LinearSVC)", "Section-Aware Word", "C=3.0, balanced", LinearSVC(C=3.0, class_weight="balanced", max_iter=2500, random_state=RANDOM_SEED), sec_vec, X_tr_sec, X_va_sec),
     ]
     
     records = []
-    best_macro_f1 = -1.0
-    best_model_obj = None
-    best_vectorizer_obj = w_vec
-    best_config_name = ""
     
     print("Executing Systematic Hyperparameter & Representation Tuning on Validation Split:")
     print("-" * 110)
-    print(f"{'Model':24s} | {'Features':19s} | {'Hyperparameters':25s} | {'Val Acc':7s} | {'Val Macro-F1':12s}")
+    print(f"{'Model':24s} | {'Features':20s} | {'Hyperparameters':22s} | {'Val Acc':7s} | {'Val Macro-F1':12s}")
     print("-" * 110)
     
     for model_name, feats, hparams, clf, vec_obj, tr_mat, va_mat in experiments:
@@ -160,7 +173,7 @@ def train_classical_models(
         val_p = res["val_macro_precision"]
         val_r = res["val_macro_recall"]
         
-        print(f"{model_name:24s} | {feats:19s} | {hparams:25s} | {val_acc:7.4f} | {val_f1:12.4f}", flush=True)
+        print(f"{model_name:24s} | {feats:20s} | {hparams:22s} | {val_acc:7.4f} | {val_f1:12.4f}", flush=True)
         
         records.append({
             "Model": model_name,
@@ -172,20 +185,22 @@ def train_classical_models(
             "Val Macro-F1": val_f1
         })
         
-        if hparams.startswith("C=1.0, balanced [Baseline]"):
-            best_model_obj = clf
-            best_vectorizer_obj = vec_obj if vec_obj is not None else w_vec
-            best_config_name = f"{model_name} with {feats} ({hparams})"
-            best_macro_f1 = val_f1
+    tuning_df = pd.DataFrame(records)
+    
+    # Dynamic selection of the best classical model based strictly on highest Validation Macro-F1
+    best_idx = int(tuning_df["Val Macro-F1"].values.argmax())
+    best_record = records[best_idx]
+    best_model_obj = experiments[best_idx][3]
+    best_vectorizer_obj = experiments[best_idx][4] if experiments[best_idx][4] is not None else w_vec
+    best_config_name = f"{best_record['Model']} with {best_record['Features']} ({best_record['Hyperparameters']})"
+    best_macro_f1 = best_record["Val Macro-F1"]
+    best_accuracy = best_record["Val Accuracy"]
             
     print("-" * 110)
-    print(f"Selected Final Production Model: {best_config_name}")
-    print(f"Validation Macro-F1: {best_macro_f1:.4f} (Validation Accuracy: 0.6909)")
-    print("Tuning Note: While aggressive C>=2.0 yielded marginal validation gains (+0.017), it introduced class boundary")
-    print("             instability on short/unseen samples. C=1.0 provides the optimal balance of generalization & stability.")
+    print(f"Selected Best Classical Model by Validation Macro-F1: {best_config_name}")
+    print(f"Validation Macro-F1: {best_macro_f1:.4f} | Validation Accuracy: {best_accuracy:.4f}")
     
     # Save artifacts
-    tuning_df = pd.DataFrame(records)
     METRICS_DIR.mkdir(parents=True, exist_ok=True)
     tuning_df.to_csv(METRICS_DIR / "validation_tuning_experiments.csv", index=False)
     

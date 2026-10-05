@@ -1,12 +1,12 @@
 {
   "total_evaluated": 373,
-  "total_errors": 103,
-  "error_rate": 0.2761,
+  "total_errors": 104,
+  "error_rate": 0.2788,
   "score_type": "Decision Score",
   "root_cause_distribution": {
-    "Subtle Discriminative Boundary / Multi-Disciplinary Experience": 86,
-    "Semantic Overlap (Financial Domain shared terminology)": 7,
-    "Semantic Overlap (Client acquisition & revenue terminology)": 6,
-    "Cross-domain Creative & Media Terminology": 4
+    "Subtle Discriminative Boundary / Multi-Disciplinary Experience": 90,
+    "Semantic Overlap (Financial Domain shared terminology)": 6,
+    "Cross-domain Creative & Media Terminology": 4,
+    "Semantic Overlap (Client acquisition & revenue terminology)": 4
   }
 }
