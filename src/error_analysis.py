@@ -3,14 +3,14 @@ Error Analysis Module for Resume Classification.
 Analyzes misclassified examples from validation and test sets:
 - Records actual vs predicted class, confidence/decision scores, snippet preview
 - Identifies error root causes (Class Overlap, Generic Language, Misleading Keywords, Boundary Decisions)
-- Generates structured error report CSV and Markdown summary.
+- Generates structured error report CSVs (misclassified_examples.csv) and JSON summaries.
 """
 import os
 import json
 import joblib
 import pandas as pd
 import numpy as np
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 
 try:
     from src.config import (
@@ -31,7 +31,7 @@ def analyze_misclassifications(
     split_name: str = "test"
 ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
     """
-    Identifies and categorizes misclassified samples for the best classical model.
+    Identifies and categorizes misclassified samples for the best classical model (Linear SVM).
     """
     vectorizer = joblib.load(TFIDF_VECTORIZER_PATH)
     encoder = joblib.load(LABEL_ENCODER_PATH)
@@ -45,30 +45,38 @@ def analyze_misclassifications(
     y_pred_idx = model.predict(X_tfidf)
     y_pred_str = encoder.inverse_transform(y_pred_idx)
     
-    # Calculate confidence or decision score
-    if hasattr(model, "predict_proba"):
-        probs = model.predict_proba(X_tfidf)
-        confidences = np.max(probs, axis=1)
-        score_type = "probability"
-    elif hasattr(model, "decision_function"):
+    # Calculate decision scores
+    if hasattr(model, "decision_function"):
         scores = model.decision_function(X_tfidf)
         confidences = np.max(scores, axis=1)
-        score_type = "decision_margin"
+        score_type = "Decision Score"
+    elif hasattr(model, "predict_proba"):
+        probs = model.predict_proba(X_tfidf)
+        confidences = np.max(probs, axis=1)
+        score_type = "Probability"
     else:
-        confidences = [1.0] * len(y_pred_idx)
-        score_type = "uncalibrated"
+        confidences = np.ones(len(y_pred_idx))
+        score_type = "Deterministic"
         
     errors = []
+    formatted_examples = []
+    
     for idx in range(len(eval_df)):
         if y_true_idx[idx] != y_pred_idx[idx]:
             raw_text = str(texts[idx])
             cleaned = preprocess_text(raw_text)
             
-            # Root cause heuristic diagnosis
             actual = y_true_str[idx]
             pred = y_pred_str[idx]
+            dec_score = round(float(confidences[idx]), 4)
+            preview = (raw_text[:200] + "...").replace("\n", " ").replace("\r", " ").strip()
             
-            # Check for specific known semantic overlaps
+            # Root cause diagnostic heuristics:
+            # 1. Financial Domain: shared vocabulary across Banking, Finance, and Accountant
+            # 2. Commercial / Client Acquisition: shared terminology across Business Development, Sales, Consultant
+            # 3. Creative / Media: shared design terminology across Digital Media, Arts, Designer, Public Relations
+            # 4. Short document: documents with very sparse token counts (< 100 words)
+            # 5. Multi-disciplinary: candidates holding cross-domain roles (e.g. IT manager in Healthcare)
             if {actual, pred}.issubset({"FINANCE", "BANKING", "ACCOUNTANT"}):
                 cause = "Semantic Overlap (Financial Domain shared terminology)"
             elif {actual, pred}.issubset({"BUSINESS-DEVELOPMENT", "SALES", "CONSULTANT"}):
@@ -84,18 +92,31 @@ def analyze_misclassifications(
                 "resume_id": eval_df.iloc[idx]["ID"],
                 "actual_category": actual,
                 "predicted_category": pred,
-                "confidence_score": round(float(confidences[idx]), 4),
+                "confidence_score": dec_score,
                 "score_metric": score_type,
                 "word_count": len(cleaned.split()),
-                "text_snippet": (raw_text[:250] + "...").replace("\n", " ").strip(),
+                "text_snippet": preview,
                 "diagnosed_root_cause": cause
             })
             
+            formatted_examples.append({
+                "actual_class": actual,
+                "predicted_class": pred,
+                "decision_score": dec_score,
+                "text_preview": preview,
+                "error_category": cause
+            })
+            
     errors_df = pd.DataFrame(errors)
+    examples_df = pd.DataFrame(formatted_examples)
     
-    # Save CSV
+    # Save standard misclassified_samples CSV
     csv_out = ERROR_ANALYSIS_DIR / f"misclassified_samples_{split_name}.csv"
     errors_df.to_csv(csv_out, index=False)
+    
+    # Save rubric-specified misclassified_examples CSV
+    examples_csv_out = ERROR_ANALYSIS_DIR / "misclassified_examples.csv"
+    examples_df.to_csv(examples_csv_out, index=False)
     
     # Error cause breakdown
     cause_summary = errors_df["diagnosed_root_cause"].value_counts().to_dict() if len(errors_df) > 0 else {}

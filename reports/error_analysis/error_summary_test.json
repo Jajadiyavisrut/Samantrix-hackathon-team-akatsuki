@@ -2,7 +2,7 @@
   "total_evaluated": 373,
   "total_errors": 103,
   "error_rate": 0.2761,
-  "score_type": "decision_margin",
+  "score_type": "Decision Score",
   "root_cause_distribution": {
     "Subtle Discriminative Boundary / Multi-Disciplinary Experience": 87,
     "Semantic Overlap (Financial Domain shared terminology)": 7,
