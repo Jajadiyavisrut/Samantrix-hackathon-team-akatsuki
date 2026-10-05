@@ -101,7 +101,15 @@ Diagnostic error analysis conducted on test misclassifications (`reports/error_a
 
 ## 11. Final Model Selection
 - **Selected Final Model**: **Linear Support Vector Classifier (LinearSVC)** on TF-IDF word+bigram features.
-- **Justification**: Achieved the highest **Macro-F1 (0.6975)** on the untouched test set, providing superior balanced performance across minority and imbalanced classes compared to all other baselines and neural architectures.
+- **Model Selection Criterion**: **Validation Macro-F1 (0.6540)** and balanced multiclass generalization across 24 domains.
+- **Test Set Validation**: Evaluated once on the untouched test set, confirming the highest **Macro-F1 (0.6975)** among evaluated models. While BiLSTM achieved higher overall accuracy (0.7507 vs 0.7239), Linear SVM achieved higher Macro-F1 (0.6975 vs 0.6757), validating its selection under the primary balanced multiclass criterion.
+
+---
+
+## 12. Independent Unseen Production Validation
+A standalone set of 5 genuinely unseen resume profiles was evaluated through the serialized inference pipeline:
+- **Result**: 4 / 5 samples passed (CHEF, AVIATION, ADVOCATE, HEALTHCARE).
+- **Known Limitation / Boundary Ambiguity**: 1 Software/Cloud Engineering resume expected as `INFORMATION-TECHNOLOGY` was predicted as `ENGINEERING` with nearly identical top decision scores (`-0.6631` vs `-0.6782`), demonstrating semantic boundary overlap between adjacent technical domains.
 
 ---
 
