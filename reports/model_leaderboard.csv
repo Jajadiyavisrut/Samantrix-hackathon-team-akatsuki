@@ -1,0 +1,16 @@
+rank,experiment_id,preprocessing,feature_type,word_ngram,char_ngram,min_df,max_df,sublinear_tf,classifier,C,class_weight,accuracy,macro_precision,macro_recall,macro_f1,weighted_f1,training_time,prediction_time
+1,B2,Variant C (Domain Punctuation & Tech Tokens),char_tfidf,None,"(3,6)",2,0.95,True,LinearSVC,1.0,None,0.6532,0.6565,0.6076,0.597,0.634,23.9309,0.0886
+2,B4,Variant C (Domain Punctuation & Tech Tokens),char_tfidf,None,"(5,7)",3,0.95,True,LinearSVC,1.0,None,0.6532,0.646,0.6065,0.5954,0.6335,16.096,0.0622
+3,B3,Variant C (Domain Punctuation & Tech Tokens),char_tfidf,None,"(4,6)",2,0.95,True,LinearSVC,1.0,None,0.6478,0.628,0.6022,0.5894,0.6273,19.7857,0.0755
+4,C1,Variant C (Domain Punctuation & Tech Tokens),word_char_fusion,"(1,2)","(3,5)",2,0.95,True,LinearSVC,1.0,None,0.6398,0.6159,0.5953,0.5855,0.6231,26.3828,0.0818
+5,C4,Variant C (Domain Punctuation & Tech Tokens),word_char_fusion,"(1,2)","(4,6)",2,0.95,True,LinearSVC,1.0,None,0.6371,0.6331,0.5926,0.5808,0.6169,16.4941,0.0516
+6,C3,Variant C (Domain Punctuation & Tech Tokens),word_char_fusion,"(1,3)","(3,5)",2,0.95,True,LinearSVC,1.0,None,0.6317,0.6102,0.5878,0.5761,0.6131,18.3156,0.05
+7,C2,Variant C (Domain Punctuation & Tech Tokens),word_char_fusion,"(1,2)","(3,6)",2,0.95,True,LinearSVC,1.0,None,0.6317,0.6233,0.5869,0.5737,0.61,31.0265,0.0898
+8,D2,Variant C (Domain Punctuation & Tech Tokens),word_tfidf,"(1,2)",None,2,0.95,True,LinearSVC,2.0,None,0.6317,0.6344,0.5881,0.5737,0.6082,2.4171,0.007
+9,D3,Variant C (Domain Punctuation & Tech Tokens),word_char_fusion,"(1,3)","(3,5)",2,0.95,True,LinearSVC,1.0,balanced,0.629,0.6082,0.5854,0.5735,0.6103,17.2446,0.0506
+10,B1,Variant C (Domain Punctuation & Tech Tokens),char_tfidf,None,"(3,5)",2,0.95,True,LinearSVC,1.0,None,0.6317,0.6062,0.5874,0.5729,0.6098,18.2451,0.0651
+11,A3,Variant C (Domain Punctuation & Tech Tokens),word_tfidf,"(1,3)",None,2,0.95,True,LinearSVC,1.0,None,0.6263,0.6301,0.5831,0.5691,0.6031,5.9371,0.013
+12,A1,Variant C (Domain Punctuation & Tech Tokens),word_tfidf,"(1,2)",None,2,0.95,True,LinearSVC,1.0,None,0.6237,0.6207,0.5808,0.5649,0.599,1.9989,0.007
+13,D1,Variant C (Domain Punctuation & Tech Tokens),word_tfidf,"(1,2)",None,2,0.95,True,LinearSVC,1.0,balanced,0.6183,0.5946,0.5759,0.5594,0.5941,1.8826,0.008
+14,A2,Variant C (Domain Punctuation & Tech Tokens),word_tfidf,"(1,2)",None,2,0.95,True,LogisticRegression,2.0,None,0.5995,0.584,0.5525,0.534,0.5743,20.6623,0.0263
+15,A4,Variant C (Domain Punctuation & Tech Tokens),word_tfidf,"(1,3)",None,2,0.95,True,LogisticRegression,2.0,None,0.5941,0.5779,0.5476,0.5291,0.569,33.5513,0.0375
