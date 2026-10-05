@@ -7,12 +7,12 @@ SAMATRIX RESUMEFORGE 2026 Hackathon Compliant:
 - Correctly labeled Decision Confidence / Scores
 - Preprocessed text preview & Top discriminative keywords
 """
-import streamlit as st
-import pandas as pd
-import numpy as np
 import os
 import sys
 from pathlib import Path
+import pandas as pd
+import numpy as np
+import streamlit as st
 
 # Add project root to path
 APP_DIR = Path(__file__).resolve().parent
@@ -92,7 +92,7 @@ else:
     )
 
 # Run Classification Button
-if st.button("🚀 Classify Resume", type="primary", use_container_width=True):
+if st.button("🚀 Classify Resume", type="primary"):
     if not raw_text_content or len(raw_text_content.strip()) == 0:
         st.warning("⚠️ Please provide resume text or upload a valid PDF document before classifying.")
     else:
@@ -107,7 +107,7 @@ if st.button("🚀 Classify Resume", type="primary", use_container_width=True):
             with col1:
                 st.subheader("🎯 Predicted Category")
                 st.markdown(f"## :green[{result['predicted_category']}]")
-                st.caption(f"Based on learned discriminative terminology and text patterns.")
+                st.caption("Based on learned discriminative terminology and text patterns.")
                 
             with col2:
                 st.subheader(f"📊 {result['score_type']}")
@@ -127,7 +127,7 @@ if st.button("🚀 Classify Resume", type="primary", use_container_width=True):
             st.subheader("🏆 Top Ranked Categories")
             top_df = pd.DataFrame(result["top_classes"])
             top_df.columns = ["Category", "Decision Score", "Score Metric"]
-            st.dataframe(top_df, use_container_width=True, hide_index=True)
+            st.dataframe(top_df, hide_index=True)
             
             # Discriminative Terms in this Resume
             if result.get("top_terms"):

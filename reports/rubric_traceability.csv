@@ -1,0 +1,13 @@
+rubric_item,requirement,implementation_file,implementation_function,evidence,status
+1. Problem Understanding,Define multiclass NLP problem across 24 domains with macro-F1 evaluation,README.md / notebooks/resume_classification_analysis.ipynb,Documentation & Pipeline Definition,Problem Statement defined with 24 categories in README & Notebook,PASS
+2. Data Gathering,Inspect raw CSV and category-organized PDF dataset,src/data_loader.py,load_raw_csv() / inspect_dataset_sources(),Raw dataset loaded from data/raw/Resume.csv with 2484 records,PASS
+3. Data Quality,Audit missing values duplicate records and corrupted resumes,src/data_validation.py,run_data_quality_audit() / clean_and_split_data(),reports/data_quality_report.json (1 empty record and 2 duplicates removed),PASS
+4. EDA,Generate class distribution length stats word clouds n-grams and class terms,src/eda.py,run_full_eda(),reports/figures/01 to 07 generated (class distribution length ngrams wordclouds),PASS
+5. Text Preprocessing,Reproducible normalization preserving C++ C# .NET Python SQL AWS,src/preprocessing.py,preprocess_text() / tokenize_text(),src/preprocessing.py verified via tests/test_pipeline.py,PASS
+6. Train/Val/Test Split,Stratified 70/15/15 split without data leakage,src/data_validation.py,clean_and_split_data(),data/processed/train.csv (1736) val.csv (372) test.csv (373),PASS
+7. Feature Engineering,Word and bigram TF-IDF fitted strictly on training data,src/features.py,build_tfidf_features() / build_neural_sequences(),models/tfidf_vectorizer.joblib & models/neural_tokenizer.joblib,PASS
+8. Classical ML,Train MultinomialNB Logistic Regression and LinearSVC baselines,src/train_ml.py,train_classical_models(),models/best_classical_model.joblib tuned on validation split,PASS
+9. Deep Learning,Bidirectional LSTM with learned embeddings and early stopping,src/train_dl.py,train_neural_model(),models/neural_lstm_model.pt (PyTorch BiLSTM CPU/GPU compatible),PASS
+10. Evaluation,Compare all models on untouched test set using Macro-F1,src/evaluate.py,evaluate_all_models_on_test(),reports/metrics/model_comparison_test.csv & confusion matrix heatmaps,PASS
+11. Error Analysis,Diagnose misclassifications with root cause breakdown,src/error_analysis.py,analyze_misclassifications(),reports/error_analysis/misclassified_samples_test.csv & error_summary_test.json,PASS
+12. Final Pipeline & Demo,End-to-end inference on text & PDF with Streamlit app,src/inference.py / app/app.py,predict_text() / predict_pdf(),app/app.py Streamlit UI & verified inference pipeline,PASS
